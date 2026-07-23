@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Kart Takip</title>
+<style>
+  :root{
+    --bg:#0e1420; --panel:#161e2e; --panel2:#1c2638;
+    --ink:#e8edf5; --muted:#8593a8; --line:#26324a;
+    --ok:#3ddc97; --warn:#ffb347; --danger:#ff5d6c;
+    --accent:#5aa9ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:-apple-system,"SF Pro Text",Segoe UI,Roboto,sans-serif;
+    background:var(--bg); color:var(--ink);
+    min-height:100vh; padding:16px 16px 60px;
+    max-width:760px; margin:0 auto;
+  }
+  h1{font-size:22px;font-weight:700;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
+  h1 .dot{width:10px;height:10px;border-radius:50%;background:var(--ok);display:inline-block}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  header{margin-bottom:18px}
+
+  /* mesaj bandı — görünür hata/başarı */
+  #banner{display:none;margin:0 0 14px;padding:12px 14px;border-radius:12px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+  #banner.err{display:block;background:#3a1620;border:1px solid #6e2434;color:#ffb8c2}
+  #banner.ok{display:block;background:#12312a;border:1px solid #1f5c4a;color:#9df0cf}
+
+  .tabs{display:flex;gap:8px;margin-bottom:16px}
+  .tab{flex:1;text-align:center;padding:10px;border-radius:12px;background:var(--panel);
+    color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;border:1px solid var(--line)}
+  .tab.active{background:var(--accent);color:#08111f;border-color:var(--accent)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+
+  /* kredi kartı görünümlü kutu */
+  .kart{
+    border-radius:16px;padding:16px 18px;cursor:pointer;position:relative;
+    background:linear-gradient(135deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);
+    aspect-ratio:auto;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;
+  }
+  .kart .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .kart .adi{font-size:17px;font-weight:700}
+  .kart .banka{color:var(--muted);font-size:13px;margin-top:2px}
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;letter-spacing:.4px}
+  .badge.sirket{background:#1d3a5c;color:#8fc6ff}
+  .badge.sahsi{background:#3c2d55;color:#cbb1ff}
+  .kart .borc{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:12px}
+  .kart .borc small{font-size:13px;color:var(--muted);font-weight:500}
+  .kart .alt{display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px}
+  .kart .odeme{color:var(--muted);font-size:12px}
+  .kalan{font-size:13px;font-weight:700;padding:5px 11px;border-radius:99px}
+  .kalan.g{background:#12312a;color:var(--ok)}
+  .kalan.o{background:#3a2c12;color:var(--warn)}
+  .kalan.r{background:#3a1620;color:var(--danger)}
+  .kart.pasif{opacity:.45}
+
+  .panelbox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:16px}
+  .panelbox h2{font-size:15px;margin-bottom:12px}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+  input,select{
+    width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--bg);color:var(--ink);font-size:16px;
+  }
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button{
+    width:100%;margin-top:14px;padding:13px;border:none;border-radius:12px;
+    background:var(--accent);color:#08111f;font-size:15px;font-weight:700;cursor:pointer;
+  }
+  button.sil{background:transparent;border:1px solid var(--danger);color:var(--danger);margin-top:8px}
+  button.iptal{background:transparent;border:1px solid var(--line);color:var(--muted);margin-top:8px}
+  .bos{color:var(--muted);text-align:center;padding:30px 10px;font-size:14px}
+
+  .alici{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+  .alici:last-child{border-bottom:none}
+  .alici .isim{font-weight:600}
+  .alici .tel{color:var(--muted);font-size:13px}
+  .alici a{color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;padding:7px 12px;border:1px solid var(--accent);border-radius:99px}
+  .yenile{position:fixed;right:16px;bottom:16px;width:auto;padding:11px 18px;border-radius:99px;
+    background:var(--panel2);color:var(--ink);border:1px solid var(--line);font-size:13px;margin:0}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="dot"></span>Kart Takip</h1>
+  <div class="sub">Şirket &amp; şahsi kredi kartları · WhatsApp hatırlatmalı</div>
+</header>
+
+<div id="banner"></div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="kartlar" onclick="tabAc('kartlar')">Kartlar</div>
+  <div class="tab" data-tab="alicilar" onclick="tabAc('alicilar')">Alıcılar</div>
+</div>
+
+<!-- KARTLAR -->
+<div id="sayfa-kartlar">
+  <div class="grid" id="kartListe"></div>
+  <div class="panelbox">
+    <h2 id="formBaslik">Yeni kart ekle</h2>
+    <input type="hidden" id="f_id">
+    <label>Kart adı</label>
+    <input id="f_adi" placeholder="örn. İş Bankası Maximum">
+    <label>Banka</label>
+    <input id="f_banka" placeholder="örn. İş Bankası">
+    <div class="row2">
+      <div>
+        <label>Tür</label>
+        <select id="f_tur"><option value="sirket">Şirket</option><option value="sahsi">Şahsi</option></select>
+      </div>
+      <div>
+        <label>Aktif mi?</label>
+        <select id="f_aktif"><option value="true">Aktif</option><option value="false">Pasif</option></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div><label>Hesap kesim günü</label><input id="f_kesim" type="number" min="1" max="31" placeholder="örn. 15"></div>
+      <div><label>Son ödeme günü</label><input id="f_odeme" type="number" min="1" max="31" placeholder="örn. 25"></div>
+    </div>
+    <div class="row2">
+      <div><label>Limit (TL)</label><input id="f_limit" type="number" inputmode="decimal" placeholder="0"></div>
+      <div><label>Güncel borç (TL)</label><input id="f_borc" type="number" inputmode="decimal" placeholder="0"></div>
+    </div>
+    <button onclick="kartKaydet()">Kaydet</button>
+    <button class="sil" id="btnSil" style="display:none" onclick="kartSil()">Kartı sil</button>
+    <button class="iptal" id="btnIptal" style="display:none" onclick="formSifirla()">Vazgeç</button>
+  </div>
+</div>
+
+<!-- ALICILAR -->
+<div id="sayfa-alicilar" style="display:none">
+  <div class="panelbox">
+    <h2>WhatsApp alıcıları</h2>
+    <div id="aliciListe"></div>
+  </div>
+  <div class="panelbox">
+    <h2>Yeni alıcı ekle</h2>
+    <label>İsim</label><input id="a_isim" placeholder="örn. Canberk">
+    <label>Telefon (başında 90 ile)</label><input id="a_tel" inputmode="numeric" placeholder="905XXXXXXXXX">
+    <label>CallMeBot API anahtarı</label><input id="a_key" placeholder="örn. 6677904">
+    <button onclick="aliciKaydet()">Alıcıyı ekle</button>
+  </div>
+</div>
+
+<button class="yenile" onclick="hepsiniYukle()">↻ Yenile</button>
+
+<script>
+const SB_URL = "https://wfocfqixyetlefeappby.supabase.co/rest/v1";
+const SB_KEY = "sb_publishable_qa0yrdPhU1S_51v-QWwdSQ_U8TLpoLm";
+
+const H = {
+  "apikey": SB_KEY,
+  "Authorization": "Bearer " + SB_KEY,
+  "Content-Type": "application/json",
+  "Prefer": "return=representation"
+};
+
+function mesaj(t, tip){ const b=document.getElementById("banner"); b.className=tip; b.textContent=t;
+  if(tip==="ok"){ setTimeout(()=>{ b.className=""; b.style.display="none"; b.removeAttribute("style"); },3500); } }
+function hata(e){ mesaj("HATA: " + (e.message || JSON.stringify(e)), "err"); }
+
+async function sb(path, opts={}){
+  const r = await fetch(SB_URL + path, { headers: H, ...opts });
+  const txt = await r.text();
+  if(!r.ok) throw new Error(r.status + " → " + txt);
+  return txt ? JSON.parse(txt) : null;
+}
+
+function tabAc(ad){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active", t.dataset.tab===ad));
+  document.getElementById("sayfa-kartlar").style.display = ad==="kartlar" ? "" : "none";
+  document.getElementById("sayfa-alicilar").style.display = ad==="alicilar" ? "" : "none";
+}
+
+/* ---- gün hesabı: son ödeme gününe kaç gün kaldı ---- */
+function kalanGun(odemeGunu){
+  const bugun = new Date(); bugun.setHours(0,0,0,0);
+  const y = bugun.getFullYear(), m = bugun.getMonth();
+  const buAySon = new Date(y, m+1, 0).getDate();
+  let hedef = new Date(y, m, Math.min(odemeGunu, buAySon));
+  if(hedef < bugun){
+    const sonrakiAySon = new Date(y, m+2, 0).getDate();
+    hedef = new Date(y, m+1, Math.min(odemeGunu, sonrakiAySon));
+  }
+  return Math.round((hedef - bugun) / 86400000);
+}
+function tlFmt(n){ return (n==null? "—" : Number(n).toLocaleString("tr-TR",{maximumFractionDigits:0}) + " ₺"); }
+
+/* ---- KARTLAR ---- */
+let kartlar = [];
+async function kartlariYukle(){
+  kartlar = await sb("/kartlar?select=*&order=son_odeme_gunu.asc");
+  const kutu = document.getElementById("kartListe");
+  if(!kartlar.length){ kutu.innerHTML = '<div class="bos">Henüz kart eklenmedi. Aşağıdaki formdan ilk kartını ekle.</div>'; return; }
+  // aktifler önce, kalan güne göre sırala
+  kartlar.sort((a,b)=> (b.aktif - a.aktif) || (kalanGun(a.son_odeme_gunu) - kalanGun(b.son_odeme_gunu)));
+  kutu.innerHTML = kartlar.map(k=>{
+    const g = kalanGun(k.son_odeme_gunu);
+    const sinif = g<=3 ? "r" : g<=7 ? "o" : "g";
+    const etiket = g===0 ? "BUGÜN!" : g + " gün kaldı";
+    return `<div class="kart ${k.aktif?'':'pasif'}" onclick="kartDuzenle('${k.id}')">
+      <div class="top">
+        <div><div class="adi">${k.kart_adi}</div><div class="banka">${k.banka||""}</div></div>
+        <span class="badge ${k.tur}">${k.tur==="sirket"?"ŞİRKET":"ŞAHSİ"}</span>
+      </div>
+      <div class="borc">${tlFmt(k.guncel_borc)} <small>/ limit ${tlFmt(k.limit_tl)}</small></div>
+      <div class="alt">
+        <div class="odeme">Kesim: ayın ${k.kesim_gunu||"—"}'i · Son ödeme: ayın ${k.son_odeme_gunu}'i</div>
+        <span class="kalan ${sinif}">${etiket}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function kartDuzenle(id){
+  const k = kartlar.find(x=>x.id===id); if(!k) return;
+  document.getElementById("formBaslik").textContent = "Kartı düzenle";
+  f_id.value=k.id; f_adi.value=k.kart_adi; f_banka.value=k.banka||"";
+  f_tur.value=k.tur; f_aktif.value=String(k.aktif);
+  f_kesim.value=k.kesim_gunu||""; f_odeme.value=k.son_odeme_gunu;
+  f_limit.value=k.limit_tl||""; f_borc.value=k.guncel_borc||"";
+  document.getElementById("btnSil").style.display="";
+  document.getElementById("btnIptal").style.display="";
+  document.querySelector(".panelbox").scrollIntoView({behavior:"smooth"});
+}
+function formSifirla(){
+  document.getElementById("formBaslik").textContent = "Yeni kart ekle";
+  ["f_id","f_adi","f_banka","f_kesim","f_odeme","f_limit","f_borc"].forEach(i=>document.getElementById(i).value="");
+  f_tur.value="sirket"; f_aktif.value="true";
+  document.getElementById("btnSil").style.display="none";
+  document.getElementById("btnIptal").style.display="none";
+}
+async function kartKaydet(){
+  try{
+    if(!f_adi.value.trim()) throw new Error("Kart adı boş olamaz.");
+    if(!f_odeme.value) throw new Error("Son ödeme günü zorunlu.");
+    const veri = {
+      kart_adi: f_adi.value.trim(), banka: f_banka.value.trim()||null,
+      tur: f_tur.value, aktif: f_aktif.value==="true",
+      kesim_gunu: f_kesim.value? Number(f_kesim.value): null,
+      son_odeme_gunu: Number(f_odeme.value),
+      limit_tl: f_limit.value? Number(f_limit.value): null,
+      guncel_borc: f_borc.value? Number(f_borc.value): 0
+    };
+    if(f_id.value){
+      await sb("/kartlar?id=eq."+f_id.value, {method:"PATCH", body: JSON.stringify(veri)});
+      mesaj("Kart güncellendi ✓","ok");
+    } else {
+      await sb("/kartlar", {method:"POST", body: JSON.stringify(veri)});
+      mesaj("Kart eklendi ✓","ok");
+    }
+    formSifirla(); await kartlariYukle();
+  }catch(e){ hata(e); }
+}
+async function kartSil(){
+  try{
+    if(!f_id.value) return;
+    if(!confirm("Bu kart silinsin mi?")) return;
+    await sb("/kartlar?id=eq."+f_id.value, {method:"DELETE"});
+    mesaj("Kart silindi ✓","ok"); formSifirla(); await kartlariYukle();
+  }catch(e){ hata(e); }
+}
+
+/* ---- ALICILAR ---- */
+async function alicilariYukle(){
+  const liste = await sb("/bildirim_alicilari?select=*&order=isim.asc");
+  const kutu = document.getElementById("aliciListe");
+  if(!liste.length){ kutu.innerHTML='<div class="bos">Henüz alıcı yok.</div>'; return; }
+  kutu.innerHTML = liste.map(a=>{
+    const url = "https://api.callmebot.com/whatsapp.php?phone="+a.telefon+"&text="+encodeURIComponent("Kart Takip test mesajı ✓")+"&apikey="+a.callmebot_apikey;
+    return `<div class="alici">
+      <div><div class="isim">${a.isim}${a.aktif?"":" (pasif)"}</div><div class="tel">+${a.telefon}</div></div>
+      <a href="${url}" target="_blank">Test gönder</a>
+    </div>`;
+  }).join("");
+}
+async function aliciKaydet(){
+  try{
+    if(!a_isim.value.trim() || !a_tel.value.trim() || !a_key.value.trim())
+      throw new Error("İsim, telefon ve API anahtarı zorunlu.");
+    await sb("/bildirim_alicilari", {method:"POST", body: JSON.stringify({
+      isim:a_isim.value.trim(), telefon:a_tel.value.trim(), callmebot_apikey:a_key.value.trim()
+    })});
+    mesaj("Alıcı eklendi ✓","ok");
+    a_isim.value=a_tel.value=a_key.value="";
+    await alicilariYukle();
+  }catch(e){ hata(e); }
+}
+
+async function hepsiniYukle(){
+  try{ await kartlariYukle(); await alicilariYukle(); }
+  catch(e){ hata(e); }
+}
+hepsiniYukle();
+</script>
+</body>
+</html>
