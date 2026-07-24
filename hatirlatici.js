@@ -52,7 +52,8 @@ async function gonder(mesaj) {
     const url = "https://api.callmebot.com/whatsapp.php?phone=" + a.telefon +
       "&text=" + encodeURIComponent(mesaj) + "&apikey=" + a.callmebot_apikey;
     const r = await fetch(url);
-    console.log(a.isim + " (+" + a.telefon + ") → " + r.status);
+        console.log(a.isim + " (+" + a.telefon + ") → " + r.status + " | " + (await r.text()).replace(/<[^>]*>/g, "").slice(0, 200));
+
     await new Promise(res => setTimeout(res, 3000));
   }
   console.log("--- Gonderilen mesaj ---\n" + mesaj + "\n");
