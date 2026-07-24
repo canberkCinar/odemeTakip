@@ -3,7 +3,7 @@ name: Kart Odeme Kontrol
 on:
   schedule:
     - cron: "0 6 * * *"   # her gun 06:00 UTC = 09:00 Turkiye saati
-  workflow_dispatch:        # elle "Run workflow" ile test icin
+  workflow_dispatch:        # elle test: rapor da gonderilir
 
 jobs:
   kontrol:
