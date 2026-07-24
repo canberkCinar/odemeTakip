@@ -6,7 +6,7 @@
 
 const SB_URL = "https://wfocfqixyetlefeappby.supabase.co/rest/v1";
 const SB_KEY = "sb_publishable_qa0yrdPhU1S_51v-QWwdSQ_U8TLpoLm";
-
+//
 const H = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY };
 const GUNLER = ["Pazar","Pazartesi","Sali","Carsamba","Persembe","Cuma","Cumartesi"];
 const AYLAR = ["Ocak","Subat","Mart","Nisan","Mayis","Haziran","Temmuz","Agustos","Eylul","Ekim","Kasim","Aralik"];
