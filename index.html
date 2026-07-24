@@ -266,6 +266,33 @@ async function kartSil(){
   }catch(e){ hata(e); }
 }
 
+/* ---- yeni kart eklenince anlık uyarı ---- */
+async function anlikUyari(k){
+  try{
+    const g = kalanGun(k.son_odeme_gunu);
+    if(g > 5 || !k.aktif) return;
+    const alicilar = await sb("/bildirim_alicilari?select=*&aktif=eq.true");
+    if(!alicilar.length) return;
+    const metin = "⏰ *Kart Ödeme Hatırlatması*\n\n• " + k.kart_adi +
+      " (" + (k.tur==="sirket"?"Şirket":"Şahsi") + ") — *" +
+      (g===0 ? "son ödeme BUGÜN" : g + " gün sonra kart ödemesi var") + "* (ayın " + k.son_odeme_gunu + "'i)" +
+      (k.guncel_borc ? " — borç: " + Number(k.guncel_borc).toLocaleString("tr-TR",{maximumFractionDigits:0}) + " TL" : "");
+    for(const a of alicilar){
+      const url = "https://api.callmebot.com/whatsapp.php?phone=" + a.telefon +
+        "&text=" + encodeURIComponent(metin) + "&apikey=" + a.callmebot_apikey;
+      fetch(url, {mode:"no-cors"}); // tarayıcıdan doğrudan gönderim
+    }
+    // uyarıyı karta işle ki saatlik kontrol aynı mesajı tekrar atmasın
+    if(k.id){
+      const bugun = new Date(); bugun.setHours(0,0,0,0);
+      const hedef = new Date(bugun); hedef.setDate(hedef.getDate() + g);
+      const donem = hedef.getFullYear() + "-" + String(hedef.getMonth()+1).padStart(2,"0") + "-" + String(hedef.getDate()).padStart(2,"0");
+      await sb("/kartlar?id=eq." + k.id, {method:"PATCH", body: JSON.stringify({son_uyari_donem: donem, son_uyari_kalan: g})});
+    }
+    mesaj("Kart eklendi ✓ — son ödemeye " + g + " gün kaldığı için WhatsApp uyarısı gönderildi 📲","ok");
+  }catch(e){ /* anlık uyarı başarısız olsa da kart kaydı etkilenmez */ }
+}
+
 /* ---- ALICILAR ---- */
 async function alicilariYukle(){
   const liste = await sb("/bildirim_alicilari?select=*&order=isim.asc");
