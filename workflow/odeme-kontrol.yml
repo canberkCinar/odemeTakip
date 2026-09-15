@@ -2,11 +2,8 @@ name: Kart Odeme Kontrol
 
 on:
   schedule:
-    - cron: "0 6 * * *"   # her gun 06:00 UTC = 09:00 Turkiye saati
-  workflow_dispatch:        # elle test: rapor da gonderilir
-
-permissions:
-  actions: write
+    - cron: "0 6 * * *"
+  workflow_dispatch:
 
 jobs:
   kontrol:
@@ -22,5 +19,3 @@ jobs:
           NETGSM_USER: ${{ secrets.NETGSM_USER }}
           NETGSM_PASS: ${{ secrets.NETGSM_PASS }}
           NETGSM_HEADER: ${{ secrets.NETGSM_HEADER }}
-      - name: Workflow canli tut
-        uses: gautamkrishnar/keepalive-workflow@v2
